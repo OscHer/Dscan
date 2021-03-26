@@ -6,7 +6,9 @@ Dscan is a dockerized port scanner (no pun intended) whose sole purpose is to fi
 ## Install
 ### Dependencies
 * Host
-  * Docker engine
+  * docker-ce
+  * docker-ce-cli
+  * containerd.io
  
 ## Appendix
 TODO
