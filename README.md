@@ -5,10 +5,13 @@ Dscan is a dockerized port scanner (no pun intended) whose sole purpose is to fi
 
 ## Install
 ### Dependencies
-* Host
-  * docker-ce
-  * docker-ce-cli
-  * containerd.io
+* Docker: [All distros](https://docs.docker.com/engine/install/)
+  * Fedora >=33:
+  ```bash    
+    $ sudo dnf -y install dnf-plugins-core
+    $ sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+    $ sudo dnf install docker-ce docker-ce-cli containerd.io
+   ```  
  
 ## Appendix
 TODO
