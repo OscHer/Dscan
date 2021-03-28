@@ -6,20 +6,25 @@
 
 # Variables section
 # Binaries
-SSLSCAN_BIN=$(which sslscan) # Get sslscan full path. # This could be abstracted to use any other scan utility since detection and parsing are fully parametrizable.
+SSLSCAN_BIN=$(which sslscan) # Get sslscan full path. #IMPROV: This could be abstracted to use any other scan utility since detection and parsing are fully parametrizable.
 SSLSCAN_OPTIONS="--no-check-certificate --no-cipher-details --no-sigs --no-ciphersuites --no-fallback  --no-renegotiation --no-groups --no-heartbleed --no-compression"
-
-
+# Inventory file
+INVENTORY='fichero.txt' # Harcoded for requirements of the test. #IMPROV Should be just a default and overwritten with params '-f' or the like
 # Debug
-DEBUG=1 # Set to 1 for verbose output. # TODO: intialize if '-v' when launch
-
+DEBUG=1 # Set to 1 for verbose output. # IMPROV: intialize if '-v' when launch
 # DB section
 MYSQL_HOSTNAME='localhost' # Harcoded since it's a local connection
 #MYSQL_USERNAME='' # Default container username. May change later
 #MYSQL_PASSWORD='' # Default container username. May change later
 
-# Parameters section
-INVENTORY='fichero.txt' # Harcoded for requirements of the test.
+# Check ip. True if given a correct IP. False if not.
+# Developer comment: this may seem lazy, but since ip route exists in most linux distros this seems a better approach for a smaller Docker image and avoids stupidly complex regexp. Cons: user who launches the script may have not permissions to execute this command.
+check_ip()
+{
+  IP=$1 # IMPROV: Avoid injection with some pre-cleaning.
+
+  ip route get $IP > /dev/null 2>&1 ; echo $?
+}
 
 # Scan one host. Input: valid ip address. Output: array with ssl/tls info
 scan_one_host ()
@@ -41,20 +46,20 @@ main()
 
   # Loop over inventory file
   for SERVER in $(cat $INVENTORY); do
-    echo $SERVER
-    # If IP is valid
-      # Scan host port 443
+    # Check for valid IP or jump 
+      if [[ $(check_ip $SERVER) -eq 0 ]] 
+        then
+          echo "Scanning $SERVER"      # Scan host port 443
         # If port reachable 
           # Insert to ddbb
       # Scan host port 8443
         # If port reachable
           # Insert to ddbb   
-    # else
-      # echo host not valid
-    # endif
+      else # Not valid IP: skip
+        echo "$SERVER is not a valid IP address" 
+      fi
   done
 }
 
 
 main
-scan_one_host 192.168.2.6
