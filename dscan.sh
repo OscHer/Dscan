@@ -16,14 +16,14 @@ MYSQL_BIN=$(which mysql) # Get mysql client full path.
 INVENTORY='fichero.txt' # Harcoded for requirements of the test. #IMPROV Should be just a default and overwritten with params '-f' or the like
 
 # Debug
-DEBUG=0 # Set to 1 for verbose output. # IMPROV: intialize if '-v' when launching and count 'v's for verbosity levels. In python this is trivial, but since I decided to go with (I WAS TOTALLY WRONG!) now I have to stick with it.
+DEBUG=2 # Set to integer value for verbose output. # IMPROV: intialize if '-v' when launching and count 'v's for verbosity levels. In python this is trivial, but since I decided to go with (I WAS TOTALLY WRONG!) now I have to stick with it.
 
 # DB section
 #MYSQL_HOSTNAME='localhost' # Harcoded since it's a local connection
-#MYSQL_USERNAME='' # Default container username. May change later
-#MYSQL_PASSWORD='' # Default container username. May change later
+MYSQL_USER="root" # TODO: parametrize and obfuscate
+MYSQL_PASSWORD="rootpass" # TODO: parametrize and obfuscate
 MYSQL_DB="ssldb"
-MYSQL_TABLE="IPS"
+MYSQL_TABLE="ips"
 
 # Check ip. True if given a correct IP. False if not.
 # Developer comment: this may seem lazy, but since ip route exists in most linux distros this seems a better approach for a smaller Docker image and avoids stupidly complex regexp. Cons: user who launches the script may have not permissions to execute this command.
@@ -32,6 +32,7 @@ check_ip()
   IP=$1 # IMPROV: Avoid injection with some pre-cleaning.
 
   ip route get $IP > /dev/null 2>&1 ; echo $?
+
 }
 
 
@@ -50,9 +51,10 @@ scan_one_host ()
     VALOR="$(echo $line | cut -d' ' -f2)" # Get original value of scanned port
     [[ "$VALOR" == "enabled" ]] && VALOR=1 || VALOR=0 # Translate returned value into bool value
 
-    scanResultArray[$CLAVE]=$VALOR # 
-     
-    #[[ $DEBUG -eq 1 ]] && echo $HOST'--'$CLAVE'---'$VALOR'--' # Debug purpose
+    #TODO: insert avoid sql-injection methods here
+
+    scanResultArray[$CLAVE]=$VALOR # Assign key-value already parsed      
+    [[ $DEBUG -eq 1 ]] && echo $HOST'--'$CLAVE'---'$VALOR'--' # Debug purpose
   done < <($SSLSCAN_BIN $SSLSCAN_OPTIONS $HOST:$PORT 2>/dev/null | grep abled | tr -s " ")
 
   [[ $DEBUG -eq 1 ]] && for CLAVE in "${!scanResultArray[@]}"; do echo "$CLAVE"'='${scanResultArray[$CLAVE]}; done
@@ -74,13 +76,18 @@ main()
           scanResultArray=()
           scan_one_host $SERVER 443
 
-          # If we reached desired ports add register to ddbb
+          # If we reached desired ports, add register to ddbb
           if [[ ${scanResultArray[@]} ]]; then # Scan host port 443 # IMPROV: provide an array of ports to iterate it instead of hardcoding
-            echo insert into mysql here
-            for CLAVE in "${!scanResultArray[@]}"; do echo "$CLAVE"'='${scanResultArray[$CLAVE]}; done
+            [[ $DEBUG -eq 1 ]] && for CLAVE in "${!scanResultArray[@]}"; do echo "$CLAVE"'='${scanResultArray[$CLAVE]}; done
+           
             # Insert scan resulto into mysql # TODO: insert connectivty checks here
-            # $MYSQL_BIN $MYSQL_DB
+            # DEVELOPER NOTE: I know database fields are  not named as asked, but I'll cross that bridge after a MVP release
+            #[[ $DEBUG -eq 2 ]] && echo "$MYSQL_BIN -u $MYSQL_USER $MYSQL_DB -e \"insert into ips (\`ip\`,\`puerto\`,\`SSLv2\`,\`SSLv3\`,\`TLSv10\`,\`TLSv11\`,\`TLSv12\`,\`TLSv13\`) VALUES ('127.0.0.1','443', '1','0','1','1','0','1')\";" 
+        
+            $MYSQL_BIN -u $MYSQL_USER -p$MYSQL_PASSWORD $MYSQL_DB -e "insert into \`$MYSQL_TABLE\` (\`ip\`,\`puerto\`,\`SSLv2\`,\`SSLv3\`,\`TLSv10\`,\`TLSv11\`,\`TLSv12\`,\`TLSv13\`) VALUES ('$SERVER','$PORT', '${scanResultArray[SSLv2]}','${scanResultArray[SSLv3]}','${scanResultArray[TLSv10]}','${scanResultArray[TLSv11]}','${scanResultArray[TLSv12]}','${scanResultArray[TLSv13]}')" 
 
+            #$MYSQL_BIN -u $MYSQL_USER $MYSQL_DB -e "insert into \`$MYSQL_TABLE\` (\`ip\`,\`puerto\`,\`SSLv2\`,\`SSLv3\`,\`TLSv10\`,\`TLSv11\`,\`TLSv12\`,\`TLSv13\`) VALUES ('127.0.0.1','443', '1','0','1','1','0','1')" 
+            
           else 
             echo "Host $SERVER:$PORT unreachable. Skipping"
             scanResultArray=""
