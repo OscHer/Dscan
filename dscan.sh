@@ -6,7 +6,8 @@
 
 # Variables section
 # Binaries
-SSLSCAN_BIN=$(which sslscan) # Get sslscan full path
+SSLSCAN_BIN=$(which sslscan) # Get sslscan full path. # This could be abstracted to use any other scan utility since detection and parsing are fully parametrizable.
+SSLSCAN_OPTIONS="--no-check-certificate --no-cipher-details --no-sigs --no-ciphersuites --no-fallback  --no-renegotiation --no-groups --no-heartbleed --no-compression"
 
 
 # Debug
@@ -18,24 +19,7 @@ MYSQL_HOSTNAME='localhost' # Harcoded since it's a local connection
 #MYSQL_PASSWORD='' # Default container username. May change later
 
 # Parameters section
-INVENTORY='fichero.txt'
-
-
-# Functions
-# Check dependencies # TODO
-  # scan binary or exit with error
-# Check args # TODO
-  # inventory file exists or exit with error
-
-# Get hosts. Input: existing file with ips. Output: Add SSL/TSL info of desired host of valid IPs to database
-get_hosts()
-{
-  [[ $DEBUG -eq 1 ]] && echo ${FUNCNAME[0]}: # Debug mode
-  FILE=$1 # Inventory. TODO: check syntax and avoid code injection.
-  for HOST in $(cat $FILE); do
-    scan_one_host $HOST
-  done
-}
+INVENTORY='fichero.txt' # Harcoded for requirements of the test.
 
 # Scan one host. Input: valid ip address. Output: array with ssl/tls info
 scan_one_host ()
@@ -43,11 +27,34 @@ scan_one_host ()
   HOST=$1 # TODO: This seems redundant but later we can add resolving strategies if hostname provided 
 
   [[ $DEBUG -eq 1 ]] && echo ${FUNCNAME[0]}: $HOST # Debug mode
-  sslscan --no-check-certificate --no-cipher-details --no-sigs --no-ciphersuites --no-fallback  --no-renegotiation --no-groups --no-heartbleed --no-compression $HOST:443 | grep abled
+  $SSLSCAN_BIN $SSLSCAN_OPTIONS $HOST:80 | grep abled
 
 }
-  # Add one register to mysql
-# Main
-# Check args or exit #TODO
 
-get_hosts $INVENTORY   
+# Main function: highest level of abstraction of this algorithm.
+# This functions calls all other involved after making some tests
+main()
+{
+
+  [[ -r $INVENTORY ]] || (echo "ERROR: Cannot read '$INVENTORY'." && exit 1) # Check if inventory file is readable
+  [[ -x $SSLSCAN_BIN ]] || (echo "ERROR: Cannot execute '$SSLSCAN_BIN'. Check for the binary file or execution permissions." && exit 2) # Check if sslscan is available for execution
+
+  # Loop over inventory file
+  for SERVER in $(cat $INVENTORY); do
+    echo $SERVER
+    # If IP is valid
+      # Scan host port 443
+        # If port reachable 
+          # Insert to ddbb
+      # Scan host port 8443
+        # If port reachable
+          # Insert to ddbb   
+    # else
+      # echo host not valid
+    # endif
+  done
+}
+
+
+main
+scan_one_host 192.168.2.6
