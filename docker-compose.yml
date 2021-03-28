@@ -1,0 +1,17 @@
+version: '3.3'
+services:
+  mydscan:
+    image: mysql:5.7
+    environment:
+      MYSQL_DATABASE: 'ssldb'
+      MYSQL_USER: 'fpuser'
+      MYSQL_PASSWORD: 'xxxxx'
+      MYSQL_ROOT_PASSWORD: 'rootpass'
+    ports:
+      - 3306:3306
+    expose:
+      - '3306'
+    volumes:
+      - dscandb:/var/lib/mysql
+volumes:
+  dscandb:
