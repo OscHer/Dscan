@@ -6,6 +6,7 @@
 
 # Variables section
 declare -A scanResultArray # Iterator array to get protocol=state as pair=value as a result of scanned HOST:PORT
+PORT_LIST=(443 8443)
 
 # Binaries
 SSLSCAN_BIN=$(which sslscan) # Get sslscan full path. #IMPROV: This could be abstracted to use any other scan utility since detection and parsing are fully parametrizable.
@@ -70,35 +71,30 @@ main()
 
   # Loop over inventory file
   for SERVER in $(cat $INVENTORY); do
-      # Check for valid IP or jump 
-      if [[ $(check_ip $SERVER) -eq 0 ]]; then
-          echo "Scanning $SERVER:"
-          scanResultArray=()
-          scan_one_host $SERVER 443
+    if [[ $(check_ip $SERVER) -eq 0 ]]; then # If its a valid IP we scan it
+      for SCANNEDPORT in ${PORT_LIST[@]}; do
 
-          # If we reached desired ports, add register to ddbb
-          if [[ ${scanResultArray[@]} ]]; then # Scan host port 443 # IMPROV: provide an array of ports to iterate it instead of hardcoding
-            [[ $DEBUG -eq 1 ]] && for CLAVE in "${!scanResultArray[@]}"; do echo "$CLAVE"'='${scanResultArray[$CLAVE]}; done
+        PORTSCANNED=$SCANNEDPORT
+        echo -n "Scanning $SERVER:$PORTSCANNED: "
+        scanResultArray=()
+        scan_one_host $SERVER $PORTSCANNED
+
+        # TODO: Get this into a function which receives the array. Not stylish but the clock is ticking.
+        # If we reached desired ports, add register to ddbb
+        if [[ ${scanResultArray[@]} ]]; then # Scan host port 443 # IMPROV: provide an array of ports to iterate it instead of hardcoding
+          [[ $DEBUG -eq 2 ]] && (echo ; for CLAVE in "${!scanResultArray[@]}"; do echo "$CLAVE"'='${scanResultArray[$CLAVE]}; done)
            
-            # Insert scan resulto into mysql # TODO: insert connectivty checks here
-            # DEVELOPER NOTE: I know database fields are  not named as asked, but I'll cross that bridge after a MVP release
-            #[[ $DEBUG -eq 2 ]] && echo "$MYSQL_BIN -u $MYSQL_USER $MYSQL_DB -e \"insert into ips (\`ip\`,\`puerto\`,\`SSLv2\`,\`SSLv3\`,\`TLSv10\`,\`TLSv11\`,\`TLSv12\`,\`TLSv13\`) VALUES ('127.0.0.1','443', '1','0','1','1','0','1')\";" 
-        
-            $MYSQL_BIN -u $MYSQL_USER -p$MYSQL_PASSWORD $MYSQL_DB -e "insert into \`$MYSQL_TABLE\` (\`ip\`,\`puerto\`,\`SSLv2\`,\`SSLv3\`,\`TLSv10\`,\`TLSv11\`,\`TLSv12\`,\`TLSv13\`) VALUES ('$SERVER','$PORT', '${scanResultArray[SSLv2]}','${scanResultArray[SSLv3]}','${scanResultArray[TLSv10]}','${scanResultArray[TLSv11]}','${scanResultArray[TLSv12]}','${scanResultArray[TLSv13]}')" 
+          # Insert scan result into mysql # TODO: insert connectivity checks here
+          # DEVELOPER NOTE: I know database fields are  not named as asked, but I'll cross that bridge after a MVP release
+          $MYSQL_BIN -u $MYSQL_USER -p$MYSQL_PASSWORD $MYSQL_DB -e "insert into \`$MYSQL_TABLE\` (\`ip\`,\`puerto\`,\`SSLv2\`,\`SSLv3\`,\`TLSv10\`,\`TLSv11\`,\`TLSv12\`,\`TLSv13\`) VALUES ('$SERVER','$PORTSCANNED', '${scanResultArray[SSLv2]}','${scanResultArray[SSLv3]}','${scanResultArray[TLSv10]}','${scanResultArray[TLSv11]}','${scanResultArray[TLSv12]}','${scanResultArray[TLSv13]}')" 2> /dev/null
+        else 
+          echo "Unreachable. Skipping"
+        fi
+      done
 
-            #$MYSQL_BIN -u $MYSQL_USER $MYSQL_DB -e "insert into \`$MYSQL_TABLE\` (\`ip\`,\`puerto\`,\`SSLv2\`,\`SSLv3\`,\`TLSv10\`,\`TLSv11\`,\`TLSv12\`,\`TLSv13\`) VALUES ('127.0.0.1','443', '1','0','1','1','0','1')" 
-            
-          else 
-            echo "Host $SERVER:$PORT unreachable. Skipping"
-            scanResultArray=""
-          fi
-          # Scan host port 8443
-            # If port reachable
-              # Insert to ddbb   
-      else # Not valid IP: skip
-        echo "$SERVER is not a valid IP address" 
-        scanResultArray=""
-      fi
+    else # Not valid IP: skip
+      echo "$SERVER is not a valid IP address" 
+    fi
   done
 }
 
