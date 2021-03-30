@@ -5,7 +5,7 @@ services:
     image: mysql:5.7
     environment:
       MYSQL_DATABASE: 'ssldb'
-      MYSQL_USER: 'root'
+      MYSQL_USER: 'fpuser'
       MYSQL_PASSWORD: 'xxxxx'
       MYSQL_ROOT_PASSWORD: 'rootpass'
       MYSQL_ROOT_HOST: '%'
@@ -14,6 +14,7 @@ services:
     expose:
       - '3306'
     volumes:
-      - dscandb:/var/lib/mysql
+      - ./dscandb:/var/lib/mysql:rw
 volumes:
-  dscandb:
+  dscandb: {}
+
