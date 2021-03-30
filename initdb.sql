@@ -19,10 +19,9 @@
 -- Table structure for table `ips`
 --
 
-DROP TABLE IF EXISTS `ips`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `ips` (
+CREATE TABLE if not exists `ips` (
   `indice` int(11) NOT NULL AUTO_INCREMENT,
   `ip` varchar(15) DEFAULT NULL,
   `puerto` smallint(6) DEFAULT NULL,
@@ -46,4 +45,4 @@ CREATE TABLE `ips` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2021-03-30  8:33:02
+-- Dump completed on 2021-03-30  8:39:20
