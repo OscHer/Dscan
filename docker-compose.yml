@@ -15,6 +15,7 @@ services:
       - '3306'
     volumes:
       - ./dscandb:/var/lib/mysql:rw
+      - ./mysql-init-files:/docker-entrypoint-initdb.d
 volumes:
   dscandb: {}
 
