@@ -1,8 +1,9 @@
 version: '3.3'
 services:
   mydscan:
+    build: .
     container_name: dscandb
-    image: mysql:5.7
+    #image: mysql:5.7
     environment:
       MYSQL_DATABASE: 'ssldb'
       MYSQL_USER: 'fpuser'
