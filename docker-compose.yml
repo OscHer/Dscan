@@ -3,7 +3,6 @@ services:
   mydscan:
     build: .
     container_name: dscandb
-    #image: mysql:5.7
     environment:
       MYSQL_DATABASE: 'ssldb'
       MYSQL_USER: 'fpuser'
@@ -19,4 +18,3 @@ services:
       - ./mysql-init-files:/docker-entrypoint-initdb.d
 volumes:
   dscandb: {}
-

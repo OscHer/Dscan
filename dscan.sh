@@ -20,7 +20,7 @@ INVENTORY='fichero.txt' # Harcoded for requirements of the test. #IMPROV Should 
 DEBUG=2 # Set to integer value for verbose output. # IMPROV: intialize if '-v' when launching and count 'v's for verbosity levels. In python this is trivial, but since I decided to go with (I WAS TOTALLY WRONG!) now I have to stick with it.
 
 # DB section
-#MYSQL_HOSTNAME='localhost' # Harcoded since it's a local connection
+MYSQL_HOSTNAME='127.0.0.1' # Harcoded since it's a local connection
 MYSQL_USER="root" # TODO: parametrize and obfuscate
 MYSQL_PASSWORD="rootpass" # TODO: parametrize and obfuscate
 MYSQL_DB="ssldb"
@@ -35,7 +35,6 @@ check_ip()
   ip route get $IP > /dev/null 2>&1 ; echo $?
 
 }
-
 
 
 # Scan one host. Input: valid ip address. Output: array with ssl/tls info
@@ -86,7 +85,7 @@ main()
            
           # Insert scan result into mysql # TODO: insert connectivity checks here
           # DEVELOPER NOTE: I know database fields are  not named as asked, but I'll cross that bridge after a MVP release
-          $MYSQL_BIN -u $MYSQL_USER -p$MYSQL_PASSWORD $MYSQL_DB -e "insert into \`$MYSQL_TABLE\` (\`ip\`,\`puerto\`,\`SSLv2\`,\`SSLv3\`,\`TLSv10\`,\`TLSv11\`,\`TLSv12\`,\`TLSv13\`) VALUES ('$SERVER','$PORTSCANNED', '${scanResultArray[SSLv2]}','${scanResultArray[SSLv3]}','${scanResultArray[TLSv10]}','${scanResultArray[TLSv11]}','${scanResultArray[TLSv12]}','${scanResultArray[TLSv13]}')" 2> /dev/null
+          $MYSQL_BIN -h $MYSQL_HOSTNAME -u $MYSQL_USER -p$MYSQL_PASSWORD $MYSQL_DB -e "insert into \`$MYSQL_TABLE\` (\`ip\`,\`puerto\`,\`SSLv2\`,\`SSLv3\`,\`TLSv10\`,\`TLSv11\`,\`TLSv12\`,\`TLSv13\`) VALUES ('$SERVER','$PORTSCANNED', '${scanResultArray[SSLv2]}','${scanResultArray[SSLv3]}','${scanResultArray[TLSv10]}','${scanResultArray[TLSv11]}','${scanResultArray[TLSv12]}','${scanResultArray[TLSv13]}')" || echo "Unable to connect to DB" #2> /dev/null
         else 
           echo "Unreachable. Skipping"
         fi
