@@ -19,6 +19,8 @@ services:
     volumes:
       - ./dscandb:/var/lib/mysql:rw
       - ./mysql-init-files:/docker-entrypoint-initdb.d
-      #- ./dscan_files:/dscan_files:rw
+      - ./dscan_files:/dscan_files:rw
+      - ./inventory:/inventory:rw
 volumes:
   dscandb: {}
+  inventory: {}
