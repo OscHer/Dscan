@@ -14,7 +14,8 @@ SSLSCAN_OPTIONS="--no-check-certificate --no-cipher-details --no-sigs --no-ciphe
 MYSQL_BIN=$(which mysql) # Get mysql client full path.
 
 # Inventory file
-INVENTORY='fichero.txt' # Harcoded for requirements of the test. #IMPROV Should be just a default and overwritten with params '-f' or the like
+#IMPROV Should be just a default and overwritten with params '-f' or the like
+[ -z $INVENTORY ] && INVENTORY="inventory/fichero.txt" && echo "Using $INVENTORY as inventory."
 
 # Debug
 DEBUG=2 # Set to integer value for verbose output. # IMPROV: intialize if '-v' when launching and count 'v's for verbosity levels. In python this is trivial, but since I decided to go with (I WAS TOTALLY WRONG!) now I have to stick with it.
