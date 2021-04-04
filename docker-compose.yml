@@ -1,7 +1,10 @@
 version: '3.3'
 services:
   mydscan:
-    build: .
+    build:
+      context: .
+      args:
+        owner: root
     container_name: dscandb
     environment:
       MYSQL_DATABASE: 'ssldb'
@@ -16,5 +19,6 @@ services:
     volumes:
       - ./dscandb:/var/lib/mysql:rw
       - ./mysql-init-files:/docker-entrypoint-initdb.d
+      #- ./dscan_files:/dscan_files:rw
 volumes:
   dscandb: {}
